@@ -1,0 +1,58 @@
+# Python virtual environment
+venv/
+.env/
+ENV/
+
+# Python compiled files
+__pycache__/
+migrations/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# Django
+*.log
+*.pot
+*.pyc
+*.pyo
+*.mo
+*.db
+*.sqlite3
+*.sqlite3-journal
+*.pid
+*.egg-info/
+*.egg
+*.manifest
+*.spec
+todo.txt
+
+# React / Node.js
+node_modules/
+dist/
+build/
+.cache/
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# System files
+.DS_Store
+Thumbs.db
