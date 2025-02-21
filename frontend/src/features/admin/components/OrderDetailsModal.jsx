@@ -1,7 +1,30 @@
 // src/features/admin/components/OrderDetailsModal.jsx
-import { X, Package, User, MapPin, Calendar, DollarSign } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Package, User, MapPin, Calendar, Phone, DollarSign } from 'lucide-react';
 
-export default function OrderDetailsModal({ order, onClose }) {
+export default function OrderDetailsModal({ order, onClose, fetchUser }) {
+  const [user, setUser] = useState(null);
+  const [loading, setModalLoading] = useState(true);
+
+  useEffect(() => {
+    if (order) {
+      console.log(order);
+      fetchUserDetails(order.user);
+    }
+  }, [order]);
+
+  const fetchUserDetails = async (userId) => {
+    setModalLoading(true);
+    try {
+      const userData = await fetchUser(userId);
+      setUser(userData); 
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     const colors = {
       'pending': 'bg-yellow-100 text-yellow-800',
@@ -33,7 +56,16 @@ export default function OrderDetailsModal({ order, onClose }) {
                 <User className="h-5 w-5 text-gray-400 mt-1" />
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Customer</h3>
-                  <p className="text-sm text-gray-900">{order.user.email}</p>
+                  {loading ? (
+                    <p className="text-sm text-gray-900">Loading...</p>
+                  ) : user ? (
+                    <>
+                    <p className="text-sm text-gray-900">{`${user.first_name} ${user.last_name}`}</p>
+                    <p className="text-sm text-gray-900">{user.phone}</p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-900">User not found</p>
+                  )}
                 </div>
               </div>
 
@@ -76,7 +108,7 @@ export default function OrderDetailsModal({ order, onClose }) {
                   <h3 className="text-sm font-medium text-gray-500">Payment</h3>
                   <p className="text-sm text-gray-900">Total: ${order.total_amount}</p>
                   <p className="text-sm text-gray-500">
-                    Method: {order.payment?.payment_method || 'N/A'}
+                    Method: {order.payment_method || 'N/A'}
                   </p>
                 </div>
               </div>
@@ -105,8 +137,8 @@ export default function OrderDetailsModal({ order, onClose }) {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {order.items.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50">
+                  {/*order.items.map((item, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <img
@@ -131,7 +163,7 @@ export default function OrderDetailsModal({ order, onClose }) {
                         ${(item.price * item.quantity).toFixed(2)}
                       </td>
                     </tr>
-                  ))}
+                  ))*/}
                 </tbody>
                 <tfoot className="bg-gray-50">
                   <tr>

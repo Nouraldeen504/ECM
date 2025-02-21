@@ -6,6 +6,7 @@ import OrderDetailsModal from './OrderDetailsModal';
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
+  const [users, setUsers] = useState({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -21,10 +22,32 @@ export default function AdminOrders() {
     try {
       const response = await adminApi.getOrders();
       setOrders(response.data);
+      console.log(orders)
+
+      const userPromises = response.data.map((order) => fetchUser(order.user));
+      const userResults = await Promise.all(userPromises);
+
+      const userMap = {};
+      userResults.forEach((user) => {
+        if (user) {
+          userMap[user.id] = user;
+        }
+      });
+      setUsers(userMap);
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUser = async (id) => {
+    try {
+      const response = await adminApi.getUser(id);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching User Details:', error);
+      return null;
     }
   };
 
@@ -127,56 +150,59 @@ export default function AdminOrders() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredOrders.map((order) => (
-              <tr key={order.order_id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
-                    #{order.order_id}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900">{order.user.email}</div>
-                  <div className="text-sm text-gray-500">{order.shipping_address}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {new Date(order.order_date).toLocaleDateString()}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {new Date(order.order_date).toLocaleTimeString()}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
-                    ${order.total_amount}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <select
-                    value={order.status}
-                    onChange={(e) => handleStatusChange(order.order_id, e.target.value)}
-                    className={`text-sm font-medium rounded-full px-3 py-1 ${getStatusColor(order.status)}`}
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={() => {
-                      setSelectedOrder(order);
-                      setIsModalOpen(true);
-                    }}
-                    className="text-primary hover:text-primary/80"
-                  >
-                    <Eye className="h-5 w-5" />
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {filteredOrders.map((order) => {
+              const user = users[order.user];
+              return (
+                <tr key={order.order_id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      #{order.order_id}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900">{user ?  user.email : 'Loading'}</div>
+                    <div className="text-sm text-gray-500">{order.shipping_address}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+                      {new Date(order.order_date).toLocaleDateString()}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {new Date(order.order_date).toLocaleTimeString()}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      ${order.total_amount}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <select
+                      value={order.status}
+                      onChange={(e) => handleStatusChange(order.order_id, e.target.value)}
+                      className={`text-sm font-medium rounded-full px-3 py-1 ${getStatusColor(order.status)}`}
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="processing">Processing</option>
+                      <option value="shipped">Shipped</option>
+                      <option value="delivered">Delivered</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => {
+                        setSelectedOrder(order);
+                        setIsModalOpen(true);
+                      }}
+                      className="text-primary hover:text-primary/80"
+                    >
+                      <Eye className="h-5 w-5" />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -189,6 +215,7 @@ export default function AdminOrders() {
             setIsModalOpen(false);
             setSelectedOrder(null);
           }}
+          fetchUser={fetchUser}
         />
       )}
     </div>

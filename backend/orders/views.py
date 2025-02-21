@@ -1,70 +1,62 @@
 # orders/views.py
-import stripe
-from django.conf import settings
-from rest_framework import viewsets, status, permissions
-from rest_framework.decorators import action, api_view
+from rest_framework import viewsets, status
 from rest_framework.response import Response
-from .models import Order, OrderItem, Payment
-from .serializers import OrderSerializer, OrderItemSerializer, PaymentSerializer
-
-stripe.api_key = settings.STRIPE_SECRET_KEY
-
-@api_view(['POST'])
-def process_payment(request):
-    try:
-        payment_method_id = request.data.get('payment_method_id')
-        amount = request.data.get('amount')
-
-        # Create payment intent
-        intent = stripe.PaymentIntent.create(
-            payment_method=payment_method_id,
-            amount=amount,
-            currency='usd',
-            confirmation_method='manual',
-            confirm=True,
-        )
-
-        return Response({
-            'success': True,
-            'client_secret': intent.client_secret
-        })
-
-    except stripe.error.CardError as e:
-        return Response({
-            'error': e.error.message
-        }, status=400)
-
-    except Exception as e:
-        return Response({
-            'error': str(e)
-        }, status=400)
+from rest_framework.permissions import IsAuthenticated
+from .models import Order, OrderItem
+from .serializers import OrderSerializer, OrderItemSerializer
+# from products.models import Product
 
 class OrderViewSet(viewsets.ModelViewSet):
-    serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
+   serializer_class = OrderSerializer
+   permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Order.objects.filter(user=self.request.user)
+   def get_queryset(self):
+       if self.request.user.is_staff:
+           return Order.objects.all()
+       return Order.objects.filter(user=self.request.user)
 
-    @action(detail=True, methods=['POST'])
-    def process_payment(self, request, pk=None):
-        order = self.get_object()
-        payment_method = request.data.get('payment_method')
-        
-        # Create payment record
-        payment = Payment.objects.create(
-            order=order,
-            amount=order.total_amount,
-            payment_method=payment_method
-        )
-        
-        # Update order status
-        order.status = 'processing'
-        order.save()
-        
-        return Response({'status': 'Payment initiated'}, status=status.HTTP_200_OK)
+   def create(self, request, *args, **kwargs):
+       # Extract data from request
+       items = request.data.pop('items', [])
+       order_data = {
+           'shipping_address': request.data.get('shipping_address'),
+           'total_amount': request.data.get('total_amount'),
+           'payment_method': 'COD',
+           'status': 'pending',
+           'items': request.data.get('items', [])
+       }
 
-class PaymentViewSet(viewsets.ModelViewSet):
-    queryset = Payment.objects.all()
-    serializer_class = PaymentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+       # Create order
+       serializer = self.get_serializer(data=order_data, context={'request': request})
+       serializer.is_valid(raise_exception=True)
+       serializer.save()
+
+    #    # Create order items
+    #    for item in items:
+    #        product = Product.objects.get(product_id=item['product_id'])
+    #        OrderItem.objects.create(
+    #            order=order,
+    #            product=product,
+    #            quantity=item['quantity'],
+    #            price=item['price']
+    #        )
+
+    #    # Update order with items included in response
+    #    serializer = self.get_serializer(order)
+       return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+   def update(self, request, *args, **kwargs):
+       # Only allow updating order status
+       partial = kwargs.pop('partial', False)
+       instance = self.get_instance()
+       serializer = self.get_serializer(instance, data={'status': request.data.get('status')}, partial=partial)
+       serializer.is_valid(raise_exception=True)
+       self.perform_update(serializer)
+       return Response(serializer.data)
+
+class OrderItemViewSet(viewsets.ReadOnlyModelViewSet):
+   serializer_class = OrderItemSerializer
+   permission_classes = [IsAuthenticated]
+
+   def get_queryset(self):
+       return OrderItem.objects.filter(order__user=self.request.user)

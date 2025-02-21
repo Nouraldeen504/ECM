@@ -17,6 +17,7 @@ import AdminDashboard from './features/admin/components/AdminDashboard';
 import AdminProducts from './features/admin/components/AdminProducts'; 
 import AdminUsers from './features/admin/components/AdminUsers';
 import AdminOrders from './features/admin/components/AdminOrders';
+import OrderConfirmation from './features/checkout/OrderConfirmation';
 
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/order-confirmation" element={<OrderConfirmation />} />
             </Route>
           </Route>
 

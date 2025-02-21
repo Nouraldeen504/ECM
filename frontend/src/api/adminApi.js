@@ -25,6 +25,9 @@ const adminApi = {
   getUsers: () => {
     return axiosInstance.get('/users/');
   },
+  getUser: (id) => {
+    return axiosInstance.get(`/users/${id}`)
+  },
   updateUser: (id, userData) => {
     return axiosInstance.put(`/users/${id}/`, userData);
   },

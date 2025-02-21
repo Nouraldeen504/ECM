@@ -1,9 +1,5 @@
 // src/features/checkout/OrderSummary.jsx
 export default function OrderSummary({ items, total, shippingDetails }) {
-  const shippingCost = 10;
-  const tax = total * 0.1;
-  const finalTotal = total + shippingCost + tax;
-
   return (
     <div className="bg-gray-50 p-6 rounded-lg">
       <h2 className="text-lg font-medium text-gray-900">Order Summary</h2>
@@ -35,16 +31,12 @@ export default function OrderSummary({ items, total, shippingDetails }) {
           <p>${total.toFixed(2)}</p>
         </div>
         <div className="flex justify-between text-sm text-gray-600">
-          <p>Shipping</p>
-          <p>${shippingCost.toFixed(2)}</p>
-        </div>
-        <div className="flex justify-between text-sm text-gray-600">
-          <p>Tax</p>
-          <p>${tax.toFixed(2)}</p>
+          <p>Delivery</p>
+          <p>Free</p>
         </div>
         <div className="flex justify-between text-base font-medium text-gray-900 pt-2 border-t">
           <p>Total</p>
-          <p>${finalTotal.toFixed(2)}</p>
+          <p>${total.toFixed(2)}</p>
         </div>
       </div>
 
@@ -52,9 +44,10 @@ export default function OrderSummary({ items, total, shippingDetails }) {
         <div className="mt-6 border-t border-gray-200 pt-4">
           <h3 className="text-sm font-medium text-gray-900">Shipping Address</h3>
           <address className="mt-2 text-sm text-gray-600 not-italic">
-            {shippingDetails.firstName} {shippingDetails.lastName}<br />
+            {shippingDetails.first_name} {shippingDetails.last_name}<br />
             {shippingDetails.address}<br />
-            {shippingDetails.city}, {shippingDetails.postalCode}
+            {shippingDetails.city}, {shippingDetails.postalCode}<br />
+            Phone: {shippingDetails.phone}
           </address>
         </div>
       )}
